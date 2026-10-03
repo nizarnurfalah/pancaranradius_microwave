@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="Sistem Informasi Geografis Pemetaan Jarak dan Radius Transmisi Gelombang Mikro (Microwave) Antar Tower BTS" />
+    <title>WebGIS Microwave Tower | Pemetaan & Kalkulator Fresnel Zone</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.min.css">
+    
+    <style>
+        :root {
+            --gis-bg: #f8fafc;
+            --gis-card: #ffffff;
+            --gis-sidebar: #0f172a;
+            --gis-primary: #1d4ed8;
+            --gis-primary-hover: #1e40af;
+            --gis-border: #e2e8f0;
+            --gis-dark-text: #0f172a;
+            --gis-light-text: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--gis-bg);
+            color: var(--gis-dark-text);
+            overflow-x: hidden;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--gis-border);
+            height: 60px;
+            padding: 0 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0f172a;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: #1d4ed8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--gis-sidebar);
+            position: fixed;
+            top: 60px;
+            bottom: 0;
+            left: 0;
+            z-index: 1020;
+            overflow-y: auto;
+            border-right: 1px solid #1e293b;
+            transition: all 0.25s ease;
+        }
+
+        .sidebar-heading {
+            color: #94a3b8;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            font-weight: 700;
+            padding: 1.25rem 1.25rem 0.4rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-link {
+            color: #cbd5e1;
+            font-weight: 500;
+            font-size: 0.86rem;
+            padding: 0.65rem 1.1rem;
+            border-radius: 6px;
+            margin: 2px 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-link:hover {
+            color: #ffffff;
+            background: #1e293b;
+        }
+
+        .sidebar-link.active {
+            color: #ffffff;
+            background: #1d4ed8;
+            font-weight: 600;
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            font-size: 0.95rem;
+            color: #94a3b8;
+        }
+
+        .sidebar-link.active i,
+        .sidebar-link:hover i {
+            color: #ffffff;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-left: 260px;
+            margin-top: 60px;
+            padding: 1.5rem;
+            min-height: calc(100vh - 60px);
+            background: #f8fafc;
+        }
+
+        .page-header-box {
+            background: #ffffff;
+            border: 1px solid var(--gis-border);
+            border-radius: 10px;
+            padding: 1.1rem 1.4rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+        }
+
+        .gis-card {
+            background: #ffffff;
+            border: 1px solid var(--gis-border);
+            border-radius: 10px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.25rem;
+        }
+
+        .gis-card-header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--gis-border);
+            padding: 0.9rem 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Map styling */
+        .leaflet-container {
+            font-family: inherit !important;
+            border-radius: 8px;
+            border: 1px solid var(--gis-border);
+        }
+
+        .tab-pane-content {
+            display: none;
+        }
+        .tab-pane-content.active {
+            display: block;
+        }
+
+        @media (max-width: 991px) {
+            .sidebar {
+                left: -260px;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Navbar -->
+    <header class="top-navbar">
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-sm btn-light border d-lg-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="brand-title" href="#">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                </div>
+                <div>
+                    <span class="text-primary">WebGIS</span> Microwave
+                </div>
+            </a>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-sm btn-outline-primary d-none d-md-flex align-items-center gap-2 rounded-2 px-3 py-1" onclick="switchTab('tab-kalkulator')">
+                <i class="fa-solid fa-calculator"></i>
+                <span class="fw-medium small">Kalkulator Fresnel & Link</span>
+            </button>
+
+            <!-- Role Switcher -->
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center gap-2 border rounded-2 px-3" id="roleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <span class="fw-medium small text-dark" id="currentRoleText">Admin (Full Access)</span>
+                    <span class="badge bg-danger rounded-pill" id="roleBadge" style="font-size: 0.65rem;">ADMIN</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="roleDropdown">
+                    <li class="px-3 py-2 small text-secondary border-bottom">
+                        <div>Ganti Mode Akses:</div>
+                    </li>
+                    <li><a class="dropdown-item py-2 small" href="javascript:void(0)" onclick="setRole('admin')"><i class="fa-solid fa-shield-halved me-2 text-danger"></i> Administrator (Full CRUD)</a></li>
+                    <li><a class="dropdown-item py-2 small" href="javascript:void(0)" onclick="setRole('user')"><i class="fa-solid fa-user me-2 text-success"></i> Operator (Peta & Analisis)</a></li>
+                    <li><a class="dropdown-item py-2 small" href="javascript:void(0)" onclick="setRole('guest')"><i class="fa-solid fa-eye me-2 text-secondary"></i> Tamu / Public (View Only)</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="mainSidebar">
+        <div class="sidebar-heading">Menu Utama</div>
+        <ul class="sidebar-nav">
+            <li>
+                <a class="sidebar-link active" onclick="switchTab('tab-dashboard')">
+                    <i class="fas fa-chart-pie"></i> Dashboard & Statistik
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-kalkulator')">
+                    <i class="fa-solid fa-calculator"></i> Kalkulator Microwave & Fresnel
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-heading">Alat Peta & Radius</div>
+        <ul class="sidebar-nav">
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-marker')">
+                    <i class="fas fa-map-pin"></i> Marker & Radius Tower
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-kordinat2')">
+                    <i class="fa-solid fa-bullseye"></i> Uji Titik Dalam Radius
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-circle')">
+                    <i class="far fa-circle"></i> Multi-Radius Antena
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-kordinat')">
+                    <i class="fas fa-crosshairs"></i> Inspektor Koordinat Peta
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-geolocation')">
+                    <i class="fas fa-location-arrow"></i> Geolokasi & Tower Terdekat
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-basemap')">
+                    <i class="fas fa-layer-group"></i> Pilihan Base Map
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-heading">Data Master Tower</div>
+        <ul class="sidebar-nav">
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-pemetaan')">
+                    <i class="fas fa-map-location-dot"></i> Peta Sebaran Tower
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link" onclick="switchTab('tab-data-lokasi')">
+                    <i class="fas fa-table"></i> Tabel Data Tower
+                </a>
+            </li>
+            <li id="menuTambahTower">
+                <a class="sidebar-link" onclick="openAddTowerModal()">
+                    <i class="fas fa-plus-circle"></i> Tambah Tower Baru
+                </a>
+            </li>
+        </ul>
+
+        <div class="p-3 mt-auto text-secondary small border-top border-secondary" style="font-size: 0.75rem;">
+            GitHub Pages Ready &bull; Zero DB Mode
+        </div>
+    </aside>
+
+    <!-- Main Container -->
+    <main class="main-wrapper">
+        <!-- 1. TAB DASHBOARD -->
+        <section id="tab-dashboard" class="tab-pane-content active">
+            <div class="page-header-box d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1 text-dark">Dashboard Overview & Analisis Microwave</h4>
+                    <p class="text-secondary small mb-0">Sistem Informasi Geografis Pemetaan Jarak & Radius Transmisi Antena Tower BTS</p>
+                </div>
+                <span class="badge bg-light border text-secondary px-3 py-2 small d-inline-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle text-success" style="font-size: 0.5rem;"></i>
+                    <span>GitHub Pages Edition</span>
+                </span>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="gis-card p-3 d-flex align-items-center justify-content-between h-100">
+                        <div>
+                            <div class="text-secondary small fw-semibold text-uppercase">Total Tower BTS</div>
+                            <div class="fs-3 fw-bold text-dark mt-1" id="dashTotalTower">5 <span class="fs-6 text-secondary fw-normal">Titik</span></div>
+                            <div class="small text-muted mt-1"><i class="fa-solid fa-tower-broadcast me-1 text-primary"></i> Terdaftar di GIS</div>
+                        </div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-light text-primary" style="width: 48px; height: 48px; font-size: 1.35rem;">
+                            <i class="fa-solid fa-tower-broadcast"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="gis-card p-3 d-flex align-items-center justify-content-between h-100">
+                        <div>
+                            <div class="text-secondary small fw-semibold text-uppercase">Tower Aktif</div>
+                            <div class="fs-3 fw-bold text-dark mt-1" id="dashActiveTower">4 <span class="fs-6 text-success fw-normal">/ 5</span></div>
+                            <div class="small text-success mt-1"><i class="fa-solid fa-circle-check me-1"></i> <span id="dashActivePct">80%</span> Operasional</div>
+                        </div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-light text-success" style="width: 48px; height: 48px; font-size: 1.35rem;">
+                            <i class="fa-solid fa-signal"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="gis-card p-3 d-flex align-items-center justify-content-between h-100">
+                        <div>
+                            <div class="text-secondary small fw-semibold text-uppercase">Rata-Rata Radius</div>
+                            <div class="fs-3 fw-bold text-dark mt-1" id="dashAvgRadius">3.520 <span class="fs-6 text-secondary fw-normal">m</span></div>
+                            <div class="small text-muted mt-1"><i class="fa-solid fa-circle-dot me-1 text-primary"></i> Jangkauan transmisi</div>
+                        </div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-light text-primary" style="width: 48px; height: 48px; font-size: 1.35rem;">
+                            <i class="fa-solid fa-circle-nodes"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="gis-card p-3 d-flex align-items-center justify-content-between h-100">
+                        <div>
+                            <div class="text-secondary small fw-semibold text-uppercase">Frekuensi Dominan</div>
+                            <div class="fs-3 fw-bold text-dark mt-1" id="dashDominantFreq">5.8 GHz</div>
+                            <div class="small text-muted mt-1"><i class="fa-solid fa-wave-square me-1 text-warning"></i> Gelombang Mikro</div>
+                        </div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center bg-light text-warning" style="width: 48px; height: 48px; font-size: 1.35rem;">
+                            <i class="fa-solid fa-radio"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Map & Quick Calc -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-8">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-map-location-dot text-primary"></i>
+                                <span>Peta Sebaran Tower & Radius Jangkauan Microwave</span>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="fitDashboardMap()">
+                                <i class="fa-solid fa-expand me-1"></i> Reset View
+                            </button>
+                        </div>
+                        <div class="p-3">
+                            <div id="dashMap" style="width: 100%; height: 480px; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fa-solid fa-calculator text-primary"></i>
+                                <span>Kalkulator Cepat Fresnel</span>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="mb-3">
+                                <label class="form-label small text-dark fw-semibold">Jarak Antar Tower ($d$)</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" id="dashQuickDist" class="form-control" value="5.2" step="0.1" oninput="runDashQuickCalc()">
+                                    <span class="input-group-text bg-light">km</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-dark fw-semibold">Frekuensi ($f$)</label>
+                                <select id="dashQuickFreq" class="form-select form-select-sm" onchange="runDashQuickCalc()">
+                                    <option value="2.4">2.4 GHz (WiFi Outdoor)</option>
+                                    <option value="5.8" selected>5.8 GHz (Microwave Standard)</option>
+                                    <option value="11.0">11.0 GHz (Licensed Link)</option>
+                                    <option value="18.0">18.0 GHz (High Capacity)</option>
+                                </select>
+                            </div>
+                            <div class="p-3 rounded-2 bg-light border mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small text-secondary">Radius Max Fresnel ($R_1$):</span>
+                                    <strong class="text-primary" id="dashResFresnel">8.21 m</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small text-secondary">60% Clearance Radius:</span>
+                                    <strong class="text-dark" id="dashResClearance">4.93 m</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="small text-secondary">Path Loss (FSPL):</span>
+                                    <strong class="text-danger" id="dashResFSPL">122.0 dB</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-secondary">Kelayakan Link:</span>
+                                    <span class="badge bg-success" id="dashResStatus">LOS Sangat Bagus</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm w-100 rounded-2 py-2 fw-medium" onclick="switchTab('tab-kalkulator')">
+                                <i class="fa-solid fa-up-right-from-square me-1"></i> Buka Analisis 2D Lengkap
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Summary -->
+            <div class="gis-card">
+                <div class="gis-card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-list text-primary"></i>
+                        <span>Daftar Titik Tower BTS & Microwave Terdaftar</span>
+                    </div>
+                    <button class="btn btn-sm btn-primary rounded-2 px-3" onclick="openAddTowerModal()">
+                        <i class="fa-solid fa-plus me-1"></i> Tambah Tower Baru
+                    </button>
+                </div>
+                <div class="p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 border" id="dashTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode & Nama Tower</th>
+                                    <th>Alamat</th>
+                                    <th>Koordinat</th>
+                                    <th>Tinggi</th>
+                                    <th>Frekuensi</th>
+                                    <th>Radius</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. TAB KALKULATOR MICROWAVE -->
+        <section id="tab-kalkulator" class="tab-pane-content">
+            <div class="page-header-box">
+                <h4 class="fw-bold mb-1 text-dark">Kalkulator Propagasi & Fresnel Zone Microwave</h4>
+                <p class="text-secondary small mb-0">Simulasi perhitungan Line-of-Sight (LOS), radius clearance elipsoid, dan Free Space Path Loss (FSPL)</p>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-lg-4">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">
+                            <i class="fa-solid fa-sliders text-primary me-2"></i> Parameter Transmisi
+                        </div>
+                        <div class="p-3">
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Pilih Pemancar (Tower A)</label>
+                                <select id="calcTowerA" class="form-select form-select-sm" onchange="loadPresetCalc('A')"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Pilih Penerima (Tower B)</label>
+                                <select id="calcTowerB" class="form-select form-select-sm" onchange="loadPresetCalc('B')"></select>
+                            </div>
+                            <hr class="my-3">
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label small text-dark fw-semibold">Tinggi Tower A (m)</label>
+                                    <input type="number" id="calcHeightA" class="form-control form-control-sm" value="50" oninput="runFullCalc()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-dark fw-semibold">Tinggi Tower B (m)</label>
+                                    <input type="number" id="calcHeightB" class="form-control form-control-sm" value="45" oninput="runFullCalc()">
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small text-dark fw-semibold">Frekuensi Transmisi ($f$)</label>
+                                <select id="calcFreq" class="form-select form-select-sm" onchange="runFullCalc()">
+                                    <option value="2.4">2.4 GHz (WiFi Outdoor)</option>
+                                    <option value="5.8" selected>5.8 GHz (Microwave Standard)</option>
+                                    <option value="7.5">7.5 GHz (Licensed Microwave)</option>
+                                    <option value="11.0">11.0 GHz (Licensed Long Haul)</option>
+                                    <option value="18.0">18.0 GHz (Metro Link)</option>
+                                </select>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small text-secondary">Tx Power (dBm)</label>
+                                    <input type="number" id="calcTxPower" class="form-control form-control-sm" value="27" oninput="runFullCalc()">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small text-secondary">Antenna Gain (dBi)</label>
+                                    <input type="number" id="calcGain" class="form-control form-control-sm" value="28" oninput="runFullCalc()">
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-primary w-100 rounded-2 fw-medium" onclick="runFullCalc()">
+                                <i class="fa-solid fa-calculator me-2"></i> Hitung Ulang Analisis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header d-flex justify-content-between align-items-center">
+                            <span class="d-flex align-items-center gap-2"><i class="fa-solid fa-chart-line text-success"></i> Hasil Analisis Link Propagasi</span>
+                            <span class="badge bg-success" id="calcStatusBadge">LOS Sangat Bagus</span>
+                        </div>
+                        <div class="p-3">
+                            <div class="row g-2 text-center mb-3">
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 rounded bg-light border">
+                                        <div class="text-secondary small">Jarak ($d$)</div>
+                                        <div class="fs-5 fw-bold text-dark" id="calcOutDist">4.85 km</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 rounded bg-light border">
+                                        <div class="text-secondary small">Radius Fresnel ($R_1$)</div>
+                                        <div class="fs-5 fw-bold text-primary" id="calcOutFresnel">7.92 m</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 rounded bg-light border">
+                                        <div class="text-secondary small">Path Loss (FSPL)</div>
+                                        <div class="fs-5 fw-bold text-danger" id="calcOutFSPL">121.4 dB</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div class="p-2 rounded bg-light border">
+                                        <div class="text-secondary small">RSL / Sinyal</div>
+                                        <div class="fs-5 fw-bold text-success" id="calcOutRSL">-38.4 dBm</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-2 rounded bg-light border mb-2">
+                                <div class="small text-secondary fw-semibold mb-1 d-flex justify-content-between">
+                                    <span>Profil 2D Fresnel Zone 1 & Line of Sight (LOS)</span>
+                                    <span class="text-success small">Area Hijau = 60% Clearance Zone</span>
+                                </div>
+                                <canvas id="calcCanvas" height="150" style="width: 100%; border-radius: 6px; background: #ffffff; border: 1px solid #e2e8f0;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gis-card">
+                <div class="gis-card-header">
+                    <span><i class="fa-solid fa-map-location text-primary me-2"></i> Peta Interaktif - Titik Tower A & B</span>
+                </div>
+                <div class="p-3">
+                    <div id="calcInteractiveMap" style="width: 100%; height: 450px; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. TAB UJI TITIK DALAM RADIUS -->
+        <section id="tab-kordinat2" class="tab-pane-content">
+            <div class="page-header-box">
+                <h4 class="fw-bold mb-1 text-dark">Uji Koordinat Dalam Radius Coverage</h4>
+                <p class="text-secondary small mb-0">Drag target marker pada peta untuk menguji apakah titik berada di dalam jangkauan sinyal tower</p>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">Parameter Uji Jangkauan</div>
+                        <div class="p-3">
+                            <div class="mb-3">
+                                <label class="form-label small text-dark fw-semibold">Pilih Tower Pusat</label>
+                                <select id="kordinat2CenterSelect" class="form-select form-select-sm" onchange="changeKordinat2Center()"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary">Radius Uji (Meter)</label>
+                                <input type="number" id="kordinat2RadiusInput" class="form-control form-control-sm" value="2500" step="100" oninput="updateKordinat2Radius()">
+                            </div>
+                            <div class="p-3 rounded-2 bg-light border" id="kordinat2StatusBox">
+                                <div class="small text-secondary mb-1">Status Sinyal:</div>
+                                <div class="fs-6 fw-bold mb-2" id="kordinat2StatusText">Menghitung...</div>
+                                <div class="d-flex justify-content-between small text-secondary">
+                                    <span>Jarak ke Tower:</span>
+                                    <strong class="text-dark" id="kordinat2DistText">0 m</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="gis-card">
+                        <div class="gis-card-header">Peta Simulasi Uji Titik</div>
+                        <div class="p-3">
+                            <div id="kordinat2Map" style="width: 100%; height: 500px; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. TAB MARKER & RADIUS -->
+        <section id="tab-marker" class="tab-pane-content">
+            <div class="gis-card">
+                <div class="gis-card-header">Visualisasi Marker & Titik Tower Antena</div>
+                <div class="p-3">
+                    <div id="markerMapView" style="width: 100%; height: 72vh; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. TAB MULTI-RADIUS -->
+        <section id="tab-circle" class="tab-pane-content">
+            <div class="gis-card">
+                <div class="gis-card-header d-flex justify-content-between">
+                    <span>Simulasi Multi-Radius Beam Antena</span>
+                    <span class="small text-secondary">Hijau: Near &bull; Biru: Mid &bull; Amber: Far Field</span>
+                </div>
+                <div class="p-3">
+                    <div id="circleMapView" style="width: 100%; height: 72vh; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. TAB INSPEKTOR KOORDINAT -->
+        <section id="tab-kordinat" class="tab-pane-content">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">Inspektor Titik Koordinat</div>
+                        <div class="p-3">
+                            <p class="small text-secondary mb-3">Klik di peta atau geser marker untuk menyalin titik lintang & bujur.</p>
+                            <div class="mb-3">
+                                <label class="form-label small text-dark fw-semibold">Latitude</label>
+                                <input type="text" class="form-control font-monospace" id="inspLat" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-dark fw-semibold">Longitude</label>
+                                <input type="text" class="form-control font-monospace" id="inspLng" readonly>
+                            </div>
+                            <button class="btn btn-primary w-100 rounded-2" onclick="copyInspCoords()">
+                                <i class="fa-solid fa-copy me-1"></i> Salin Koordinat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="gis-card">
+                        <div class="gis-card-header">Peta Penunjuk Koordinat</div>
+                        <div class="p-3">
+                            <div id="inspectorMapView" style="width: 100%; height: 60vh; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. TAB GEOLOKASI -->
+        <section id="tab-geolocation" class="tab-pane-content">
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="gis-card h-100">
+                        <div class="gis-card-header">Deteksi GPS & Tower Terdekat</div>
+                        <div class="p-3">
+                            <button class="btn btn-primary w-100 rounded-2 mb-3" onclick="locateUserGPS()">
+                                <i class="fa-solid fa-crosshairs me-1"></i> Lacak Posisi Saya
+                            </button>
+                            <div class="p-3 rounded-2 bg-light border mb-3">
+                                <div class="small text-secondary mb-1">Koordinat Pengguna:</div>
+                                <div class="font-monospace small text-dark fw-bold" id="geoUserText">Belum dilacak</div>
+                            </div>
+                            <div class="p-3 rounded-2 bg-light border" id="geoNearestBox" style="display: none;">
+                                <div class="small text-primary fw-bold mb-1">Tower Terdekat:</div>
+                                <div class="fw-bold text-dark" id="geoNearestName">-</div>
+                                <div class="small text-secondary mb-2" id="geoNearestAddr">-</div>
+                                <div class="d-flex justify-content-between small text-secondary border-top pt-2">
+                                    <span>Jarak:</span>
+                                    <strong class="text-primary" id="geoNearestDist">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="gis-card">
+                        <div class="gis-card-header">Peta Geolokasi</div>
+                        <div class="p-3">
+                            <div id="geoMapView" style="width: 100%; height: 60vh; border-radius: 6px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 8. TAB PETA SEBARAN (FULL) -->
+        <section id="tab-pemetaan" class="tab-pane-content">
+            <div class="gis-card">
+                <div class="gis-card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <span>Peta Sebaran Seluruh Tower</span>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="pemetaanSearch" class="form-control form-control-sm" placeholder="Cari tower..." style="width: 180px;" oninput="filterPemetaanMap()">
+                        <select id="pemetaanFreq" class="form-select form-select-sm" style="width: 140px;" onchange="filterPemetaanMap()">
+                            <option value="all">Semua Frekuensi</option>
+                            <option value="2.4">2.4 GHz</option>
+                            <option value="5.8">5.8 GHz</option>
+                            <option value="11.0">11.0 GHz</option>
+                            <option value="18.0">18.0 GHz</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <div id="pemetaanFullMap" style="width: 100%; height: 72vh; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. TAB DATA LOKASI MASTER (CRUD) -->
+        <section id="tab-data-lokasi" class="tab-pane-content">
+            <div class="gis-card">
+                <div class="gis-card-header d-flex justify-content-between align-items-center">
+                    <span>Daftar Data Tower (Local Storage Standalone)</span>
+                    <button class="btn btn-sm btn-primary rounded-2 px-3" onclick="openAddTowerModal()" id="btnAddTowerMaster">
+                        <i class="fa-solid fa-plus-circle me-1"></i> Tambah Tower Baru
+                    </button>
+                </div>
+                <div class="p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 border" id="masterTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode & Nama Tower</th>
+                                    <th>Alamat</th>
+                                    <th>Koordinat</th>
+                                    <th>Tinggi</th>
+                                    <th>Frekuensi</th>
+                                    <th>Radius</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 10. TAB BASEMAP -->
+        <section id="tab-basemap" class="tab-pane-content">
+            <div class="gis-card">
+                <div class="gis-card-header">Pilihan Base Map Layer (OpenStreetMap, Esri Satelit, Topografi)</div>
+                <div class="p-3">
+                    <div id="baseMapTabDiv" style="width: 100%; height: 72vh; border-radius: 6px;"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Form Tambah/Edit Tower -->
+    <div class="modal fade" id="towerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Tambah Titik Tower</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="towerForm" onsubmit="saveTowerForm(event)">
+                        <input type="hidden" id="formId">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small text-secondary fw-semibold">Kode Tower</label>
+                                <input type="text" class="form-control form-control-sm" id="formKode" required placeholder="TWR-CMI01">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-secondary fw-semibold">Status</label>
+                                <select class="form-select form-select-sm" id="formStatus">
+                                    <option value="Aktif">Aktif (Online)</option>
+                                    <option value="Maintenance">Maintenance</option>
+                                    <option value="Non-Aktif">Non-Aktif</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-dark fw-semibold">Nama Tower</label>
+                            <input type="text" class="form-control form-control-sm" id="formNama" required placeholder="Tower BTS Cimahi">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-dark fw-semibold">Alamat</label>
+                            <textarea class="form-control form-control-sm" id="formAlamat" rows="2" required placeholder="Jl. Raya..."></textarea>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small text-dark fw-semibold">Latitude</label>
+                                <input type="text" class="form-control form-control-sm font-monospace" id="formLat" required value="-6.884467">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small text-dark fw-semibold">Longitude</label>
+                                <input type="text" class="form-control form-control-sm font-monospace" id="formLng" required value="107.541979">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-4">
+                                <label class="form-label small text-secondary fw-semibold">Tinggi (m)</label>
+                                <input type="number" class="form-control form-control-sm" id="formTinggi" value="45">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-secondary fw-semibold">Frekuensi (GHz)</label>
+                                <input type="number" class="form-control form-control-sm" id="formFreq" value="5.8" step="0.1">
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small text-secondary fw-semibold">Radius (m)</label>
+                                <input type="number" class="form-control form-control-sm" id="formRadius" value="2500" step="100">
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary btn-sm px-4">Simpan Data</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
+
+    <script>
+        // Default Towers Data
+        const initialTowers = [
+            { id_lokasi: 1, kode_tower: 'TWR-CMI051', nama_lokasi: 'Tower BTS Microwave Cimahi Tengah', alamat_lokasi: 'Jl. Jend. H. Amir Machmud No. 51, Cimahi Tengah', latitude: -6.889439, longitude: 107.558329, tinggi_tower: 52, frekuensi: 5.8, radius_jangkauan: 3200, status: 'Aktif' },
+            { id_lokasi: 2, kode_tower: 'TWR-CMI057', nama_lokasi: 'Tower Microwave Kolonel Masturi', alamat_lokasi: 'Jl. Kolonel Masturi No. 57, Cipageran, Cimahi Utara', latitude: -6.865278, longitude: 107.541138, tinggi_tower: 60, frekuensi: 11.0, radius_jangkauan: 4500, status: 'Aktif' },
+            { id_lokasi: 3, kode_tower: 'TWR-CMI070', nama_lokasi: 'Tower Repeater Cihanjuang Hill', alamat_lokasi: 'Jl. Cihanjuang No. 70, Cibabat, Cimahi Utara', latitude: -6.843809, longitude: 107.567880, tinggi_tower: 45, frekuensi: 5.8, radius_jangkauan: 2800, status: 'Aktif' },
+            { id_lokasi: 4, kode_tower: 'TWR-CMI119', nama_lokasi: 'Tower Hub Mahar Martanegara', alamat_lokasi: 'Jl. Mahar Martanegara No. 119, Cimahi Selatan', latitude: -6.905289, longitude: 107.544570, tinggi_tower: 48, frekuensi: 18.0, radius_jangkauan: 2100, status: 'Maintenance' },
+            { id_lokasi: 5, kode_tower: 'TWR-BDO012', nama_lokasi: 'Tower Backbone Pasteur Gateway', alamat_lokasi: 'Jl. Dr. Djunjunan No. 143, Sukajadi, Kota Bandung', latitude: -6.892150, longitude: 107.585400, tinggi_tower: 55, frekuensi: 7.5, radius_jangkauan: 5000, status: 'Aktif' }
+        ];
+
+        let towers = JSON.parse(localStorage.getItem('webgis_towers')) || initialTowers;
+        let currentRole = 'admin';
+
+        // Map references
+        let maps = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderDashboard();
+            renderTables();
+            initDashMap();
+            runDashQuickCalc();
+        });
+
+        function saveTowersToStorage() {
+            localStorage.setItem('webgis_towers', JSON.stringify(towers));
+            renderDashboard();
+            renderTables();
+            refreshAllMaps();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('mainSidebar').classList.toggle('show');
+        }
+
+        function setRole(role) {
+            currentRole = role;
+            const badge = document.getElementById('roleBadge');
+            const text = document.getElementById('currentRoleText');
+            if (role === 'admin') {
+                badge.className = 'badge bg-danger rounded-pill';
+                badge.innerText = 'ADMIN';
+                text.innerText = 'Admin (Full Access)';
+                document.getElementById('menuTambahTower').style.display = 'block';
+                document.getElementById('btnAddTowerMaster').style.display = 'block';
+            } else if (role === 'user') {
+                badge.className = 'badge bg-success rounded-pill';
+                badge.innerText = 'OPERATOR';
+                text.innerText = 'Operator Jaringan';
+                document.getElementById('menuTambahTower').style.display = 'none';
+                document.getElementById('btnAddTowerMaster').style.display = 'none';
+            } else {
+                badge.className = 'badge bg-secondary rounded-pill';
+                badge.innerText = 'GUEST';
+                text.innerText = 'Tamu (View Only)';
+                document.getElementById('menuTambahTower').style.display = 'none';
+                document.getElementById('btnAddTowerMaster').style.display = 'none';
+            }
+            renderTables();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
+
+            const targetSection = document.getElementById(tabId);
+            if (targetSection) targetSection.classList.add('active');
+
+            // highlight menu
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(l => {
+                if (l.getAttribute('onclick') && l.getAttribute('onclick').includes(tabId)) {
+                    l.classList.add('active');
+                }
+            });
+
+            // Lazy initialize maps when tab is selected
+            setTimeout(() => {
+                if (tabId === 'tab-dashboard' && maps.dashMap) maps.dashMap.invalidateSize();
+                if (tabId === 'tab-kalkulator') initCalcModule();
+                if (tabId === 'tab-kordinat2') initKordinat2Module();
+                if (tabId === 'tab-marker') initMarkerTab();
+                if (tabId === 'tab-circle') initCircleTab();
+                if (tabId === 'tab-kordinat') initInspectorTab();
+                if (tabId === 'tab-geolocation') initGeoTab();
+                if (tabId === 'tab-pemetaan') initPemetaanFullTab();
+                if (tabId === 'tab-basemap') initBaseMapTab();
+            }, 100);
+        }
+
+        function renderDashboard() {
+            const total = towers.length;
+            const active = towers.filter(t => t.status === 'Aktif').length;
+            const totalRadius = towers.reduce((acc, t) => acc + parseFloat(t.radius_jangkauan || 0), 0);
+            const avgRadius = total > 0 ? Math.round(totalRadius / total) : 0;
+
+            document.getElementById('dashTotalTower').innerHTML = `${total} <span class="fs-6 text-secondary fw-normal">Titik</span>`;
+            document.getElementById('dashActiveTower').innerHTML = `${active} <span class="fs-6 text-success fw-normal">/ ${total}</span>`;
+            document.getElementById('dashActivePct').innerText = total > 0 ? `${Math.round((active/total)*100)}%` : '0%';
+            document.getElementById('dashAvgRadius').innerHTML = `${avgRadius.toLocaleString('id-ID')} <span class="fs-6 text-secondary fw-normal">m</span>`;
+        }
+
+        function renderTables() {
+            let html = '';
+            towers.forEach((t, i) => {
+                html += `
+                    <tr>
+                        <td class="text-secondary">${i + 1}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">${t.nama_lokasi}</div>
+                            <div class="small text-muted font-monospace">${t.kode_tower}</div>
+                        </td>
+                        <td class="small text-secondary" style="max-width:200px;">${t.alamat_lokasi}</td>
+                        <td class="small font-monospace text-dark">${parseFloat(t.latitude).toFixed(4)}, ${parseFloat(t.longitude).toFixed(4)}</td>
+                        <td class="small text-dark">${t.tinggi_tower} m</td>
+                        <td><span class="badge bg-light border text-dark">${t.frekuensi} GHz</span></td>
+                        <td><span class="badge bg-light border text-primary fw-bold">${parseFloat(t.radius_jangkauan).toLocaleString('id-ID')} m</span></td>
+                        <td><span class="badge ${t.status === 'Aktif' ? 'bg-success' : 'bg-warning text-dark'} rounded-pill">${t.status}</span></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('dashTableBody').innerHTML = html;
+
+            let masterHtml = '';
+            towers.forEach((t, i) => {
+                let actionButtons = '';
+                if (currentRole === 'admin') {
+                    actionButtons = `
+                        <button class="btn btn-sm btn-outline-primary" onclick="openEditTowerModal(${t.id_lokasi})"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTower(${t.id_lokasi}, '${t.nama_lokasi}')"><i class="fa-solid fa-trash-can"></i></button>
+                    `;
+                } else {
+                    actionButtons = `<span class="badge bg-light border text-secondary">View Only</span>`;
+                }
+
+                masterHtml += `
+                    <tr>
+                        <td class="text-secondary">${i + 1}</td>
+                        <td>
+                            <div class="fw-semibold text-dark">${t.nama_lokasi}</div>
+                            <div class="small text-muted font-monospace">${t.kode_tower}</div>
+                        </td>
+                        <td class="small text-secondary">${t.alamat_lokasi}</td>
+                        <td class="small font-monospace text-dark">${parseFloat(t.latitude).toFixed(4)}, ${parseFloat(t.longitude).toFixed(4)}</td>
+                        <td class="small text-dark">${t.tinggi_tower} m</td>
+                        <td><span class="badge bg-light border text-dark">${t.frekuensi} GHz</span></td>
+                        <td><span class="badge bg-light border text-primary fw-bold">${parseFloat(t.radius_jangkauan).toLocaleString('id-ID')} m</span></td>
+                        <td><span class="badge ${t.status === 'Aktif' ? 'bg-success' : 'bg-warning text-dark'} rounded-pill">${t.status}</span></td>
+                        <td class="text-center">${actionButtons}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('masterTableBody').innerHTML = masterHtml;
+        }
+
+        // ================= MAPS & MODULES =================
+        const createOsmLayer = () => L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' });
+        const createEsriSat = () => L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+
+        function initDashMap() {
+            if (maps.dashMap) return;
+            const map = L.map('dashMap', { center: [-6.8844, 107.5419], zoom: 13, layers: [createOsmLayer()] });
+            L.control.layers({ "OpenStreetMap Standar": createOsmLayer(), "Esri Satelit": createEsriSat() }).addTo(map);
+
+            maps.dashMap = map;
+            renderDashMarkers();
+        }
+
+        function renderDashMarkers() {
+            if (!maps.dashMap) return;
+            const map = maps.dashMap;
+            if (maps.dashLayerGroup) map.removeLayer(maps.dashLayerGroup);
+
+            const group = L.layerGroup();
+            const coords = [];
+
+            const towerIcon = L.divIcon({
+                className: 'custom-pin',
+                html: '<div style="width:30px;height:30px;background:#1d4ed8;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;box-shadow:0 2px 4px rgba(0,0,0,0.3);"><i class="fa-solid fa-tower-broadcast"></i></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+
+            towers.forEach(t => {
+                const lat = parseFloat(t.latitude);
+                const lng = parseFloat(t.longitude);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    coords.push([lat, lng]);
+                    const circle = L.circle([lat, lng], { radius: parseFloat(t.radius_jangkauan) || 2500, color: '#2563eb', weight: 1.5, fillColor: '#3b82f6', fillOpacity: 0.08 });
+                    const marker = L.marker([lat, lng], { icon: towerIcon }).bindPopup(`<b>${t.nama_lokasi}</b><br>${t.kode_tower} &bull; ${t.frekuensi} GHz<br>Radius: ${t.radius_jangkauan} m`);
+                    group.addLayer(circle);
+                    group.addLayer(marker);
+                }
+            });
+
+            if (coords.length > 1) {
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const line = L.polyline([coords[i], coords[i+1]], { color: '#d97706', weight: 2, dashArray: '5, 6' });
+                    group.addLayer(line);
+                }
+            }
+
+            group.addTo(map);
+            maps.dashLayerGroup = group;
+            if (coords.length > 0) map.fitBounds(L.latLngBounds(coords), { padding: [30, 30] });
+        }
+
+        function fitDashboardMap() {
+            if (maps.dashMap) renderDashMarkers();
+        }
+
+        function runDashQuickCalc() {
+            const d = parseFloat(document.getElementById('dashQuickDist').value) || 1;
+            const f = parseFloat(document.getElementById('dashQuickFreq').value) || 5.8;
+            const r1 = 8.656 * Math.sqrt(d / f);
+            const clr = 0.6 * r1;
+            const fspl = 20 * Math.log10(d) + 20 * Math.log10(f) + 92.45;
+
+            document.getElementById('dashResFresnel').innerText = r1.toFixed(2) + ' m';
+            document.getElementById('dashResClearance').innerText = clr.toFixed(2) + ' m';
+            document.getElementById('dashResFSPL').innerText = fspl.toFixed(1) + ' dB';
+        }
+
+        // ================= KALKULATOR FRESNEL 2D =================
+        let calcMap, markerA, markerB, calcLink;
+        let posA = [-6.889439, 107.558329];
+        let posB = [-6.865278, 107.541138];
+
+        function initCalcModule() {
+            populateCalcSelectors();
+            if (!calcMap) {
+                calcMap = L.map('calcInteractiveMap', { center: [-6.8773, 107.5497], zoom: 13, layers: [createOsmLayer()] });
+                L.control.layers({ "OpenStreetMap": createOsmLayer(), "Esri Satelit": createEsriSat() }).addTo(calcMap);
+
+                const iconA = L.divIcon({ html: '<div style="width:30px;height:30px;background:#1d4ed8;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">A</div>', iconSize: [30, 30], iconAnchor: [15, 15] });
+                const iconB = L.divIcon({ html: '<div style="width:30px;height:30px;background:#d97706;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;">B</div>', iconSize: [30, 30], iconAnchor: [15, 15] });
+
+                markerA = L.marker(posA, { draggable: true, icon: iconA }).addTo(calcMap).bindPopup("<b>Tower A</b>");
+                markerB = L.marker(posB, { draggable: true, icon: iconB }).addTo(calcMap).bindPopup("<b>Tower B</b>");
+                calcLink = L.polyline([posA, posB], { color: '#1d4ed8', weight: 2.5, dashArray: '5, 6' }).addTo(calcMap);
+
+                markerA.on('drag', e => { posA = [e.latlng.lat, e.latlng.lng]; calcLink.setLatLngs([posA, posB]); runFullCalc(); });
+                markerB.on('drag', e => { posB = [e.latlng.lat, e.latlng.lng]; calcLink.setLatLngs([posA, posB]); runFullCalc(); });
+                calcMap.on('click', e => {
+                    if (calcMap.distance(e.latlng, posA) < calcMap.distance(e.latlng, posB)) {
+                        posA = [e.latlng.lat, e.latlng.lng]; markerA.setLatLng(posA);
+                    } else {
+                        posB = [e.latlng.lat, e.latlng.lng]; markerB.setLatLng(posB);
+                    }
+                    calcLink.setLatLngs([posA, posB]);
+                    runFullCalc();
+                });
+            } else {
+                calcMap.invalidateSize();
+            }
+            runFullCalc();
+        }
+
+        function populateCalcSelectors() {
+            let opts = '<option value="">-- Pilih Tower Terdaftar --</option>';
+            towers.forEach(t => { opts += `<option value="${t.latitude},${t.longitude},${t.tinggi_tower}">${t.kode_tower} - ${t.nama_lokasi}</option>`; });
+            document.getElementById('calcTowerA').innerHTML = opts;
+            document.getElementById('calcTowerB').innerHTML = opts;
+        }
+
+        function loadPresetCalc(target) {
+            const val = document.getElementById(target === 'A' ? 'calcTowerA' : 'calcTowerB').value;
+            if (!val) return;
+            const [lat, lng, h] = val.split(',').map(Number);
+            if (target === 'A') {
+                posA = [lat, lng]; markerA.setLatLng(posA); document.getElementById('calcHeightA').value = h || 50;
+            } else {
+                posB = [lat, lng]; markerB.setLatLng(posB); document.getElementById('calcHeightB').value = h || 45;
+            }
+            calcLink.setLatLngs([posA, posB]);
+            calcMap.fitBounds(L.latLngBounds([posA, posB]), { padding: [50, 50] });
+            runFullCalc();
+        }
+
+        function runFullCalc() {
+            const hA = parseFloat(document.getElementById('calcHeightA').value) || 45;
+            const hB = parseFloat(document.getElementById('calcHeightB').value) || 45;
+            const f = parseFloat(document.getElementById('calcFreq').value) || 5.8;
+            const pTx = parseFloat(document.getElementById('calcTxPower').value) || 27;
+            const gain = parseFloat(document.getElementById('calcGain').value) || 28;
+
+            const distM = L.latLng(posA).distanceTo(L.latLng(posB));
+            const distKm = distM / 1000;
+
+            const r1 = 8.656 * Math.sqrt(distKm / f);
+            const clr = 0.6 * r1;
+            const fspl = 20 * Math.log10(distKm) + 20 * Math.log10(f) + 92.45;
+            const rsl = pTx + (gain * 2) - fspl - 2;
+
+            document.getElementById('calcOutDist').innerText = distKm.toFixed(2) + ' km';
+            document.getElementById('calcOutFresnel').innerText = r1.toFixed(2) + ' m';
+            document.getElementById('calcOutFSPL').innerText = fspl.toFixed(1) + ' dB';
+            document.getElementById('calcOutRSL').innerText = rsl.toFixed(1) + ' dBm';
+
+            const badge = document.getElementById('calcStatusBadge');
+            if (rsl > -70) { badge.className = 'badge bg-success'; badge.innerText = 'LOS Sangat Bagus'; }
+            else if (rsl > -85) { badge.className = 'badge bg-warning text-dark'; badge.innerText = 'LOS Cukup Baik'; }
+            else { badge.className = 'badge bg-danger'; badge.innerText = 'Redaman Tinggi'; }
+
+            drawFresnelCanvas(hA, hB, r1, clr);
+        }
+
+        function drawFresnelCanvas(hA, hB, r1, clr) {
+            const canvas = document.getElementById('calcCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = canvas.parentElement.clientWidth;
+            const h = canvas.height = 140;
+
+            ctx.clearRect(0, 0, w, h);
+            const marginX = 45; const marginY = 20;
+            const yA = h - marginY - (hA * 0.7); const yB = h - marginY - (hB * 0.7);
+            const xA = marginX; const xB = w - marginX;
+
+            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, h - marginY); ctx.lineTo(w, h - marginY); ctx.stroke();
+            ctx.strokeStyle = '#1d4ed8'; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.moveTo(xA, h - marginY); ctx.lineTo(xA, yA); ctx.stroke();
+            ctx.strokeStyle = '#d97706'; ctx.beginPath(); ctx.moveTo(xB, h - marginY); ctx.lineTo(xB, yB); ctx.stroke();
+
+            const midX = (xA + xB) / 2; const midY = (yA + yB) / 2;
+            const rx = (xB - xA) / 2; const ry = Math.min(35, r1 * 2.5);
+
+            ctx.save();
+            ctx.translate(midX, midY);
+            ctx.rotate(Math.atan2(yB - yA, xB - xA));
+
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.08)'; ctx.strokeStyle = 'rgba(37, 99, 235, 0.5)'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.12)'; ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+            ctx.beginPath(); ctx.ellipse(0, 0, rx, ry * 0.6, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+            ctx.strokeStyle = '#1d4ed8'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(-rx, 0); ctx.lineTo(rx, 0); ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#1d4ed8'; ctx.font = '11px sans-serif'; ctx.fillText('Tower A (' + hA + 'm)', xA - 25, yA - 6);
+            ctx.fillStyle = '#d97706'; ctx.fillText('Tower B (' + hB + 'm)', xB - 25, yB - 6);
+        }
+
+        // ================= TAB LAINNYA =================
+        function initKordinat2Module() {
+            let opts = '';
+            towers.forEach(t => { opts += `<option value="${t.latitude},${t.longitude},${t.radius_jangkauan}">${t.kode_tower} - ${t.nama_lokasi}</option>`; });
+            document.getElementById('kordinat2CenterSelect').innerHTML = opts;
+
+            if (!maps.kordinat2) {
+                const map = L.map('kordinat2Map', { center: [-6.8894, 107.5583], zoom: 14, layers: [createOsmLayer()] });
+                const centerMarker = L.marker([-6.8894, 107.5583]).addTo(map);
+                const circle = L.circle([-6.8894, 107.5583], { radius: 2500, color: '#2563eb', fillOpacity: 0.1 }).addTo(map);
+                const targetMarker = L.marker([-6.8803, 107.5489], { draggable: true }).addTo(map);
+                const line = L.polyline([[-6.8894, 107.5583], [-6.8803, 107.5489]], { color: '#d97706', dashArray: '4, 4' }).addTo(map);
+
+                maps.kordinat2 = { map, centerMarker, circle, targetMarker, line, center: [-6.8894, 107.5583], target: [-6.8803, 107.5489], radius: 2500 };
+
+                targetMarker.on('drag', e => {
+                    maps.kordinat2.target = [e.latlng.lat, e.latlng.lng];
+                    line.setLatLngs([maps.kordinat2.center, maps.kordinat2.target]);
+                    evalKordinat2();
+                });
+            } else {
+                maps.kordinat2.map.invalidateSize();
+            }
+            evalKordinat2();
+        }
+
+        function evalKordinat2() {
+            const k = maps.kordinat2;
+            const dist = L.latLng(k.center).distanceTo(L.latLng(k.target));
+            document.getElementById('kordinat2DistText').innerText = Math.round(dist) + ' m';
+            const box = document.getElementById('kordinat2StatusBox');
+            const txt = document.getElementById('kordinat2StatusText');
+            if (dist <= k.radius) {
+                box.style.background = '#f0fdf4'; box.style.border = '1px solid #10b981';
+                txt.className = 'fs-6 fw-bold text-success'; txt.innerText = 'DALAM RADIUS COVERAGE';
+            } else {
+                box.style.background = '#fef2f2'; box.style.border = '1px solid #ef4444';
+                txt.className = 'fs-6 fw-bold text-danger'; txt.innerText = 'DI LUAR RADIUS (NO SIGNAL)';
+            }
+        }
+
+        function changeKordinat2Center() {
+            const [lat, lng, r] = document.getElementById('kordinat2CenterSelect').value.split(',').map(Number);
+            maps.kordinat2.center = [lat, lng];
+            maps.kordinat2.radius = r || 2500;
+            document.getElementById('kordinat2RadiusInput').value = maps.kordinat2.radius;
+            maps.kordinat2.centerMarker.setLatLng([lat, lng]);
+            maps.kordinat2.circle.setLatLng([lat, lng]);
+            maps.kordinat2.circle.setRadius(maps.kordinat2.radius);
+            maps.kordinat2.line.setLatLngs([maps.kordinat2.center, maps.kordinat2.target]);
+            maps.kordinat2.map.setView([lat, lng], 14);
+            evalKordinat2();
+        }
+
+        function updateKordinat2Radius() {
+            maps.kordinat2.radius = parseFloat(document.getElementById('kordinat2RadiusInput').value) || 2500;
+            maps.kordinat2.circle.setRadius(maps.kordinat2.radius);
+            evalKordinat2();
+        }
+
+        function initMarkerTab() {
+            if (!maps.marker) {
+                const map = L.map('markerMapView', { center: [-6.8844, 107.5419], zoom: 13, layers: [createOsmLayer()] });
+                towers.forEach(t => {
+                    L.circle([t.latitude, t.longitude], { radius: t.radius_jangkauan, color: '#2563eb', fillOpacity: 0.08 }).addTo(map);
+                    L.marker([t.latitude, t.longitude]).bindPopup(`<b>${t.nama_lokasi}</b><br>${t.kode_tower}`).addTo(map);
+                });
+                maps.marker = map;
+            } else { maps.marker.invalidateSize(); }
+        }
+
+        function initCircleTab() {
+            if (!maps.circle) {
+                const map = L.map('circleMapView', { center: [-6.8894, 107.5583], zoom: 13, layers: [createOsmLayer()] });
+                towers.forEach(t => {
+                    const r = t.radius_jangkauan;
+                    L.circle([t.latitude, t.longitude], { radius: r*0.3, color: '#059669', fillOpacity: 0.15 }).addTo(map);
+                    L.circle([t.latitude, t.longitude], { radius: r*0.6, color: '#2563eb', fillOpacity: 0.08 }).addTo(map);
+                    L.circle([t.latitude, t.longitude], { radius: r, color: '#d97706', fillOpacity: 0.04 }).addTo(map);
+                });
+                maps.circle = map;
+            } else { maps.circle.invalidateSize(); }
+        }
+
+        function initInspectorTab() {
+            if (!maps.insp) {
+                const map = L.map('inspectorMapView', { center: [-6.8844, 107.5419], zoom: 14, layers: [createOsmLayer()] });
+                const m = L.marker([-6.8844, 107.5419], { draggable: true }).addTo(map);
+                const update = (lat, lng) => {
+                    document.getElementById('inspLat').value = lat.toFixed(6);
+                    document.getElementById('inspLng').value = lng.toFixed(6);
+                };
+                update(-6.8844, 107.5419);
+                m.on('drag', e => update(e.latlng.lat, e.latlng.lng));
+                map.on('click', e => { m.setLatLng(e.latlng); update(e.latlng.lat, e.latlng.lng); });
+                maps.insp = map;
+            } else { maps.insp.invalidateSize(); }
+        }
+
+        function copyInspCoords() {
+            const text = `${document.getElementById('inspLat').value}, ${document.getElementById('inspLng').value}`;
+            navigator.clipboard.writeText(text);
+            Swal.fire({ icon: 'success', title: 'Tersalin!', text: text, timer: 1500, showConfirmButton: false });
+        }
+
+        function initGeoTab() {
+            if (!maps.geo) {
+                const map = L.map('geoMapView', { center: [-6.8844, 107.5419], zoom: 13, layers: [createOsmLayer()] });
+                towers.forEach(t => L.marker([t.latitude, t.longitude]).bindPopup(t.nama_lokasi).addTo(map));
+                maps.geo = map;
+            } else { maps.geo.invalidateSize(); }
+        }
+
+        function locateUserGPS() {
+            navigator.geolocation.getCurrentPosition(pos => {
+                const uPos = [pos.coords.latitude, pos.coords.longitude];
+                document.getElementById('geoUserText').innerText = `${uPos[0].toFixed(6)}, ${uPos[1].toFixed(6)}`;
+                const map = maps.geo;
+                L.marker(uPos).bindPopup("<b>Posisi Anda</b>").addTo(map);
+
+                let minD = Infinity; let near = null;
+                towers.forEach(t => {
+                    const d = L.latLng(uPos).distanceTo(L.latLng([t.latitude, t.longitude]));
+                    if (d < minD) { minD = d; near = t; }
+                });
+
+                if (near) {
+                    L.polyline([uPos, [near.latitude, near.longitude]], { color: '#d97706', dashArray: '5, 5' }).addTo(map);
+                    document.getElementById('geoNearestBox').style.display = 'block';
+                    document.getElementById('geoNearestName').innerText = near.nama_lokasi;
+                    document.getElementById('geoNearestAddr').innerText = near.alamat_lokasi;
+                    document.getElementById('geoNearestDist').innerText = (minD/1000).toFixed(2) + ' km';
+                    map.fitBounds(L.latLngBounds([uPos, [near.latitude, near.longitude]]), { padding: [50, 50] });
+                }
+            }, err => Swal.fire('GPS Error', err.message, 'warning'));
+        }
+
+        function initPemetaanFullTab() {
+            if (!maps.pemetaan) {
+                const map = L.map('pemetaanFullMap', { center: [-6.8844, 107.5419], zoom: 13, layers: [createOsmLayer()] });
+                maps.pemetaanLayer = L.layerGroup().addTo(map);
+                maps.pemetaan = map;
+            } else { maps.pemetaan.invalidateSize(); }
+            filterPemetaanMap();
+        }
+
+        function filterPemetaanMap() {
+            if (!maps.pemetaanLayer) return;
+            maps.pemetaanLayer.clearLayers();
+            const q = (document.getElementById('pemetaanSearch')?.value || '').toLowerCase();
+            const f = document.getElementById('pemetaanFreq')?.value || 'all';
+
+            towers.forEach(t => {
+                const matchQ = t.nama_lokasi.toLowerCase().includes(q) || t.kode_tower.toLowerCase().includes(q);
+                const matchF = f === 'all' || parseFloat(t.frekuensi) === parseFloat(f);
+                if (matchQ && matchF) {
+                    L.circle([t.latitude, t.longitude], { radius: t.radius_jangkauan, color: '#2563eb', fillOpacity: 0.08 }).addTo(maps.pemetaanLayer);
+                    L.marker([t.latitude, t.longitude]).bindPopup(`<b>${t.nama_lokasi}</b><br>${t.frekuensi} GHz`).addTo(maps.pemetaanLayer);
+                }
+            });
+        }
+
+        function initBaseMapTab() {
+            if (!maps.basemapTab) {
+                const osm = createOsmLayer();
+                const esriSat = createEsriSat();
+                const esriTopo = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+
+                const map = L.map('baseMapTabDiv', { center: [-6.8844, 107.5419], zoom: 13, layers: [osm] });
+                L.control.layers({ "OpenStreetMap Standar": osm, "Esri Satelit": esriSat, "Esri Topografi": esriTopo }).addTo(map);
+                maps.basemapTab = map;
+            } else { maps.basemapTab.invalidateSize(); }
+        }
+
+        function refreshAllMaps() {
+            renderDashMarkers();
+            if (maps.pemetaan) filterPemetaanMap();
+        }
+
+        // ================= CRUD FUNCTIONS =================
+        let modalInstance = null;
+        function openAddTowerModal() {
+            document.getElementById('modalTitle').innerText = 'Tambah Titik Tower Baru';
+            document.getElementById('formId').value = '';
+            document.getElementById('formKode').value = 'TWR-CMI0' + (towers.length + 1);
+            document.getElementById('formNama').value = '';
+            document.getElementById('formAlamat').value = '';
+            document.getElementById('formLat').value = '-6.884467';
+            document.getElementById('formLng').value = '107.541979';
+            document.getElementById('formTinggi').value = '45';
+            document.getElementById('formFreq').value = '5.8';
+            document.getElementById('formRadius').value = '2500';
+
+            modalInstance = new bootstrap.Modal(document.getElementById('towerModal'));
+            modalInstance.show();
+        }
+
+        function openEditTowerModal(id) {
+            const t = towers.find(item => item.id_lokasi === id);
+            if (!t) return;
+            document.getElementById('modalTitle').innerText = 'Edit Data Tower';
+            document.getElementById('formId').value = t.id_lokasi;
+            document.getElementById('formKode').value = t.kode_tower;
+            document.getElementById('formNama').value = t.nama_lokasi;
+            document.getElementById('formAlamat').value = t.alamat_lokasi;
+            document.getElementById('formLat').value = t.latitude;
+            document.getElementById('formLng').value = t.longitude;
+            document.getElementById('formTinggi').value = t.tinggi_tower;
+            document.getElementById('formFreq').value = t.frekuensi;
+            document.getElementById('formRadius').value = t.radius_jangkauan;
+            document.getElementById('formStatus').value = t.status;
+
+            modalInstance = new bootstrap.Modal(document.getElementById('towerModal'));
+            modalInstance.show();
+        }
+
+        function saveTowerForm(e) {
+            e.preventDefault();
+            const id = document.getElementById('formId').value;
+            const data = {
+                kode_tower: document.getElementById('formKode').value,
+                nama_lokasi: document.getElementById('formNama').value,
+                alamat_lokasi: document.getElementById('formAlamat').value,
+                latitude: parseFloat(document.getElementById('formLat').value),
+                longitude: parseFloat(document.getElementById('formLng').value),
+                tinggi_tower: parseFloat(document.getElementById('formTinggi').value),
+                frekuensi: parseFloat(document.getElementById('formFreq').value),
+                radius_jangkauan: parseFloat(document.getElementById('formRadius').value),
+                status: document.getElementById('formStatus').value
+            };
+
+            if (id) {
+                const idx = towers.findIndex(item => item.id_lokasi === parseInt(id));
+                if (idx !== -1) towers[idx] = { ...towers[idx], ...data };
+            } else {
+                data.id_lokasi = Date.now();
+                towers.unshift(data);
+            }
+
+            saveTowersToStorage();
+            if (modalInstance) modalInstance.hide();
+            Swal.fire({ icon: 'success', title: 'Berhasil!', text: 'Data tower berhasil disimpan.', timer: 1500, showConfirmButton: false });
+        }
+
+        function deleteTower(id, name) {
+            Swal.fire({
+                title: 'Hapus Tower?',
+                text: `Yakin ingin menghapus ${name}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Ya, Hapus'
+            }).then(res => {
+                if (res.isConfirmed) {
+                    towers = towers.filter(t => t.id_lokasi !== id);
+                    saveTowersToStorage();
+                    Swal.fire({ icon: 'success', title: 'Terhapus!', timer: 1500, showConfirmButton: false });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
